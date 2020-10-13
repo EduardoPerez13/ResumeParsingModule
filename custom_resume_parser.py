@@ -2,6 +2,7 @@ import io
 import os
 import inspect
 import re
+import pandas as pd
 
 import spacy
 from pyresparser import ResumeParser, utils, constants as cs
@@ -21,8 +22,8 @@ class CustomResumeParser(ResumeParser):
         self.__custom_regex = custom_regex
         self.__matcher = Matcher(nlp.vocab)
         self.__details = {
-            'name': None,
-            'email': None,
+            'name': None,  # todo: remove
+            'email': None,  # todo: remove
             'skills': None,
             'education': None,
             'college_name': None,
@@ -30,8 +31,8 @@ class CustomResumeParser(ResumeParser):
             'designation': None,
             'experience': None,
             'company_names': None,
-            'no_of_pages': None,
-            'total_experience': None,
+            'no_of_pages': None,    # todo: remove
+            'total_experience': None,   # todo: remove??
         }
         self.__resume = resume
         if not isinstance(self.__resume, io.BytesIO):
@@ -54,8 +55,7 @@ class CustomResumeParser(ResumeParser):
         )
         name = utils.extract_name(self.__nlp, matcher=self.__matcher)
         email = utils.extract_email(self.__text)
-        mobile = utils.extract_mobile_number(self.__text, self.__custom_regex)
-        skills = utils.extract_skills(
+        skills = extract_skills(
             self.__nlp,
             self.__noun_chunks,
             self.__skills_file
@@ -162,5 +162,37 @@ def extract_education_with_gpa(nlp_text):
         else:
             education.append(key)
     return education
+
+
+def extract_skills(nlp_text, noun_chunks, skills_file=None):
+    """
+    Helper function to extract skills from spacy nlp text
+
+    :param nlp_text: object of `spacy.tokens.doc.Doc`
+    :param noun_chunks: noun chunks extracted from nlp text
+    :param skills_file: custom file with a collection of skills
+    :return: list of skills extracted
+    """
+    tokens = [token.text for token in nlp_text if not token.is_stop]
+    if not skills_file:
+        data = pd.read_csv(
+            os.path.join(os.path.dirname(__file__), 'skills.csv')
+        )
+        skills = list(data.columns.values)
+    else:
+        data = pd.read_csv(skills_file)
+        skills = [str(x).lower() for x in data['technical skills'].tolist()]
+    skillset = []
+    # check for one-grams
+    for token in tokens:
+        if token in skills:
+            skillset.append(token)
+
+    # check for bi-grams and tri-grams
+    for token in noun_chunks:
+        token = token.text.strip()
+        if token in skills:
+            skillset.append(token)
+    return [i.capitalize() for i in set([i.lower() for i in list(dict.fromkeys(skillset))])]
 
 
