@@ -1,9 +1,7 @@
 import os
-import multiprocessing as mp
 import csv
-import pandas
 
-from custom_resume_parser import CustomResumeParser
+from resume_parser.custom_resume_parser import CustomResumeParser
 from pyresparser.command_line import print_cyan
 from pprint import pprint as pp
 
@@ -41,7 +39,7 @@ def parse_directory_to_csv(directory):
     :param directory: Contains two directories, one with 'experienced' resumes and another with 'inexperienced' resumes
     :return: None
     """
-    with open('parsed_results.csv', mode='w') as parse_results_file:
+    with open('resume_parser/parsed_results.csv', mode='w') as parse_results_file:
         field_names = ['name', 'email', 'skills', 'education', 'college_name', 'degree',
                        'designation', 'experience', 'company_names', 'no_of_pages',
                        'total_experience', 'label']
@@ -56,7 +54,15 @@ def parse_directory_to_csv(directory):
 
 if __name__ == '__main__':
     # print_parsed_resume('C:/Users/Eduardo Perez/Documents/Resume/RESUME_EduardoAPerezVega2020sinAcentos.pdf')
-    # pp(parse_resume_directory('resumes/Experienced'))
-    parse_directory_to_csv('resumes')
+    # print_parsed_resume('resumes/Experienced/PWC_Olivia Peter_Regulatory Manager.pdf')
+    pp(parse_resume_directory('resume_parser/resumes/Experienced', skills_file='resume_parser/skills_dataset.csv'))
+    # parse_directory_to_csv('resumes')
+
     # df = pandas.read_csv('parsed_results.csv', encoding='cp1252')
     # print(df)
+
+    # Convert skills txt file to csv
+    # skills = pandas.read_csv("C:/Users/Eduardo Perez/Downloads/linkedin_skills.txt",
+    #                          names=('technical skills',), sep='\n')
+    # skills.to_csv('skills_dataset.csv', index=None)
+
