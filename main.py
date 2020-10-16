@@ -1,6 +1,12 @@
 import os
 import csv
 
+# from joblib._multiprocessing_helpers import mp
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.linear_model import LogisticRegression
+import pandas
+from sklearn.model_selection import train_test_split
+
 from resume_parser.custom_resume_parser import CustomResumeParser
 from pyresparser.command_line import print_cyan
 from pprint import pprint as pp
@@ -83,4 +89,26 @@ if __name__ == '__main__':
     # skills = pandas.read_csv("C:/Users/Eduardo Perez/Downloads/linkedin_skills.txt",
     #                          names=('technical skills',), sep='\n')
     # skills.to_csv('skills_dataset.csv', index=None)
+
+    # Retrieve dataset from csv file
+    dataset = pandas.read_csv("resume_parser/parsed_results.csv", encoding='cp1252')
+    data = dataset.iloc[:, 0]   # Retrieve skills column
+    target = dataset['label']   # Retrieve label column
+
+    # Vectorizer used to transform text data to a format that the model can use
+    count_vect = CountVectorizer()
+    vectorized_data = count_vect.fit_transform(data)
+
+    # Parse other resumes to use model.predict
+    parse_directory_to_csv('resume_parser/resumes/additional',
+                           csv_file='resume_parser/my_resume.csv')
+    my_resume = pandas.read_csv("resume_parser/my_resume.csv", encoding='cp1252')
+    my_resume_data = my_resume.iloc[:, 0]
+    my_resume_vectorized = count_vect.transform(my_resume_data)
+
+    # Split data for training and testing, train and then get accuracy score
+    x_train, x_test, y_train, y_test = train_test_split(vectorized_data, target, stratify=target, random_state=5)
+    ranking_model = LogisticRegression(C=1).fit(x_train, y_train)
+    print("Test set score: {:3f}".format(ranking_model.score(x_test, y_test)))
+    print(ranking_model.predict(my_resume_vectorized))
 
