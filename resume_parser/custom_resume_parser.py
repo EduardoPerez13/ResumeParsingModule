@@ -22,8 +22,6 @@ class CustomResumeParser(ResumeParser):
         self.__custom_regex = custom_regex
         self.__matcher = Matcher(nlp.vocab)
         self.__details = {
-            'name': None,  # todo: remove
-            'email': None,  # todo: remove
             'skills': None,
             'education': None,
             'college_name': None,
@@ -31,7 +29,6 @@ class CustomResumeParser(ResumeParser):
             'designation': None,
             'experience': None,
             'company_names': None,
-            'no_of_pages': None,    # todo: remove
             'total_experience': None,   # todo: remove??
         }
         self.__resume = resume
@@ -53,8 +50,6 @@ class CustomResumeParser(ResumeParser):
         cust_ent = utils.extract_entities_wih_custom_model(
             self.__custom_nlp
         )
-        name = utils.extract_name(self.__nlp, matcher=self.__matcher)
-        email = utils.extract_email(self.__text)
         skills = extract_skills(
             self.__nlp,
             self.__noun_chunks,
@@ -68,15 +63,6 @@ class CustomResumeParser(ResumeParser):
 
         # if 'education' in entities:
         #     gpa = extract_gpa(entities['education'])
-
-        # extract name
-        try:
-            self.__details['name'] = cust_ent['Name'][0]
-        except (IndexError, KeyError):
-            self.__details['name'] = name
-
-        # extract email
-        self.__details['email'] = email
 
         # extract skills
         self.__details['skills'] = skills
@@ -120,9 +106,6 @@ class CustomResumeParser(ResumeParser):
                 self.__details['total_experience'] = 0
         except KeyError:
             self.__details['total_experience'] = 0
-        self.__details['no_of_pages'] = utils.get_number_of_pages(
-            self.__resume
-        )
         return
 
 
@@ -176,7 +159,7 @@ def extract_skills(nlp_text, noun_chunks, skills_file=None):
     tokens = [token.text for token in nlp_text if not token.is_stop]
     if not skills_file:
         data = pd.read_csv(
-            os.path.join(os.path.dirname(__file__), 'skills.csv')
+            os.path.join(os.path.dirname(inspect.getfile(ResumeParser)), 'skills.csv')
         )
         skills = list(data.columns.values)
     else:
@@ -185,13 +168,13 @@ def extract_skills(nlp_text, noun_chunks, skills_file=None):
     skillset = []
     # check for one-grams
     for token in tokens:
-        if token in skills:
+        if token.lower() in skills:
             skillset.append(token)
 
     # check for bi-grams and tri-grams
     for token in noun_chunks:
         token = token.text.strip()
-        if token in skills:
+        if token.lower() in skills:
             skillset.append(token)
     return [i.capitalize() for i in set([i.lower() for i in list(dict.fromkeys(skillset))])]
 
