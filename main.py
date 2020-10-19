@@ -12,8 +12,8 @@ from pyresparser.command_line import print_cyan
 from pprint import pprint as pp
 
 
-def print_parsed_resume(file):
-    data = CustomResumeParser(file).get_extracted_data()
+def print_parsed_resume(file, skills_file=None):
+    data = CustomResumeParser(file, skills_file=skills_file).get_extracted_data()
     print(data)
 
 
@@ -53,10 +53,10 @@ def parse_dataset_to_csv():
                        'total_experience', 'label']
         parse_writer = csv.DictWriter(parse_results_file, fieldnames=field_names)
         parse_writer.writeheader()
-        for resume_type in ('Experienced', 'Inexperienced'):
+        for resume_type in ('Experienced', 'Inexperienced', 'kaggle_dataset'):
             results = parse_resume_directory('resume_parser/%s/%s' % ('resumes', resume_type))
             for parse_result in results:
-                parse_result['label'] = 1 if resume_type == 'Experienced' else 0
+                parse_result['label'] = 1 if resume_type in ('Experienced', 'kaggle_dataset') else 0
                 parse_writer.writerow(parse_result)
 
 
@@ -78,22 +78,11 @@ def parse_directory_to_csv(directory, csv_file):
             parse_writer.writerow(parse_result)
 
 
-if __name__ == '__main__':
-    # print_parsed_resume('C:/Users/Eduardo Perez/Documents/Resume/RESUME_EduardoAPerezVega2020sinAcentos.pdf')
-    # pp(parse_resume_directory('resume_parser/resumes/Experienced', skills_file='resume_parser/skills_dataset.csv'))
-
-    # Parse training set resumes
-    parse_dataset_to_csv()
-
-    # Convert skills txt file to csv
-    # skills = pandas.read_csv("C:/Users/Eduardo Perez/Downloads/linkedin_skills.txt",
-    #                          names=('technical skills',), sep='\n')
-    # skills.to_csv('skills_dataset.csv', index=None)
-
+def test_model():
     # Retrieve dataset from csv file
     dataset = pandas.read_csv("resume_parser/parsed_results.csv", encoding='cp1252')
-    data = dataset.iloc[:, 0]   # Retrieve skills column
-    target = dataset['label']   # Retrieve label column
+    data = dataset.iloc[:, 0]  # Retrieve skills column
+    target = dataset['label']  # Retrieve label column
 
     # Vectorizer used to transform text data to a format that the model can use
     count_vect = CountVectorizer()
@@ -111,4 +100,23 @@ if __name__ == '__main__':
     ranking_model = LogisticRegression(C=1).fit(x_train, y_train)
     print("Test set score: {:3f}".format(ranking_model.score(x_test, y_test)))
     print(ranking_model.predict(my_resume_vectorized))
+
+
+if __name__ == '__main__':
+    # print_parsed_resume('C:/Users/Eduardo Perez/Documents/Resume/RESUME_EduardoAPerezVega2020sinAcentos.pdf')
+    # print_parsed_resume('resume_parser/resumes/Experienced/OmkarResume.pdf',
+    #                     skills_file='resume_parser/skills_dataset.csv')
+    # pp(parse_resume_directory('resume_parser/resumes/Experienced', skills_file='resume_parser/skills_dataset.csv'))
+
+    # Parse training set resumes
+    # parse_dataset_to_csv()
+
+    test_model()
+
+    # Convert skills txt file to csv
+    # skills = pandas.read_csv("C:/Users/Eduardo Perez/Downloads/linkedin_skills.txt",
+    #                          names=('technical skills',), sep='\n')
+    # skills.to_csv('skills_dataset.csv', index=None)
+
+
 
